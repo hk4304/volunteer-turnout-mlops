@@ -1,0 +1,5 @@
+outs:
+- md5: f1e85df21950721b0a8e9979593a9e7f
+  size: 37837
+  hash: md5
+  path: beach_data.csv
