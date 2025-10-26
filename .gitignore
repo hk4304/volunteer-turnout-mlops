@@ -27,3 +27,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# DVC-managed model files
+models/*.joblib
