@@ -1,1 +1,13 @@
 /processed
+# DVC-managed data
+/data/raw/*
+!/data/raw/*.dvc
+!/data/raw/.gitignore
+
+/data/processed/*
+!/data/processed/*.dvc
+!/data/processed/.gitignore
+
+# Model files (can still ignore binaries)
+/models/*.joblib
+/models/*.pkl
