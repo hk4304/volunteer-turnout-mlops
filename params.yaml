@@ -1,0 +1,29 @@
+base:
+  random_state: 42
+
+data_processing:
+  raw_data_path: data/raw/beach_data.csv
+  processed_dir: data/processed
+  test_size: 0.2
+  target_column: actual_attendance
+
+train:
+  train_data_path: data/processed/train.csv
+  model_dir: models
+  model_name: model.joblib
+  model_params:
+    n_estimators: 200
+    max_depth: 15
+    min_samples_split: 2
+    min_samples_leaf: 1
+    max_features: 'sqrt'
+    bootstrap: true
+    oob_score: false
+    n_jobs: -1
+    max_samples: null
+    min_weight_fraction_leaf: 0.0
+    min_impurity_decrease: 0.0
+
+evaluate:
+  test_data_path: data/processed/test.csv
+  metrics_path: metrics/metrics.json

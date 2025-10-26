@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# DVC
+.dvc/
+*.dvc
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Data (don't copy large files)
+data/raw/
+data/processed/
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+tests/
+.pytest_cache/
+
+# Environment
+.env
+.env.local

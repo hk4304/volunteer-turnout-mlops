@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Turnout Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🌊 Beach Cleanup Volunteer Predictor</h1>
+            <p class="subtitle">Predict volunteer attendance using ML</p>
+        </header>
+
+        <div class="content">
+            <!-- Model Info Card -->
+            <div class="card info-card">
+                <h2>📊 Model Information</h2>
+                <div id="model-info">
+                    <div class="loading">Loading model info...</div>
+                </div>
+            </div>
+
+            <!-- Model Metrics Card -->
+            <div class="card metrics-card">
+                <h2>📈 Model Performance</h2>
+                <div id="metrics-display">
+                    <div class="loading">Loading metrics...</div>
+                </div>
+            </div>
+
+            <!-- Prediction Form -->
+            <div class="card prediction-card">
+                <h2>🎯 Make a Prediction</h2>
+                <form id="prediction-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="month">Month</label>
+                            <select id="month" name="month" required>
+                                <option value="">Select Month</option>
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="day_of_week">Day of Week</label>
+                            <select id="day_of_week" name="day_of_week" required>
+                                <option value="">Select Day</option>
+                                <option value="0">Monday</option>
+                                <option value="1">Tuesday</option>
+                                <option value="2">Wednesday</option>
+                                <option value="3">Thursday</option>
+                                <option value="4">Friday</option>
+                                <option value="5">Saturday</option>
+                                <option value="6">Sunday</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="time_of_day">Time of Day</label>
+                            <select id="time_of_day" name="time_of_day" required>
+                                <option value="">Select Time</option>
+                                <option value="9">9 AM - Morning</option>
+                                <option value="14">2 PM - Afternoon</option>
+                                <option value="16">4 PM - Evening</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="is_holiday">Is Holiday?</label>
+                            <select id="is_holiday" name="is_holiday" required>
+                                <option value="">Select</option>
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="beach_id">Beach ID</label>
+                            <select id="beach_id" name="beach_id" required>
+                                <option value="">Select Beach</option>
+                                <option value="1">Beach 1</option>
+                                <option value="2">Beach 2</option>
+                                <option value="3">Beach 3</option>
+                                <option value="4">Beach 4</option>
+                                <option value="5">Beach 5</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registered_volunteers">Registered Volunteers</label>
+                            <input type="number" id="registered_volunteers" 
+                                   name="registered_volunteers" 
+                                   placeholder="e.g., 50" min="0" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-predict">
+                        Predict Attendance
+                    </button>
+                </form>
+
+                <!-- Result Display -->
+                <div id="prediction-result" class="result-box" style="display: none;">
+                    <h3>Prediction Result</h3>
+                    <div class="result-value">
+                        <span id="predicted-value"></span> volunteers expected
+                    </div>
+                </div>
+
+                <div id="error-message" class="error-box" style="display: none;"></div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Built with ❤️ using Flask, DVC, and Docker | MLOps Pipeline</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

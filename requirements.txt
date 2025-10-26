@@ -1,0 +1,10 @@
+# requirements.txt
+numpy
+pandas
+scikit-learn
+dvc[s3]
+boto3
+joblib
+pyyaml
+flask
+gunicorn

@@ -1,0 +1,38 @@
+stages:
+  data_processing:
+    cmd: python src/data_processing.py
+    deps:
+      - src/data_processing.py
+      - data/raw/beach_data.csv
+    params:
+      - base
+      - data_processing
+      - train.model_dir
+    outs:
+      - data/processed/
+      - models/feature_names.joblib
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/processed/train.csv
+    params:
+      - base
+      - train
+    outs:
+      - models/model.joblib
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - data/processed/test.csv
+      - models/model.joblib
+    params:
+      - base
+      - data_processing.target_column
+      - evaluate
+    metrics:
+      - metrics/metrics.json:
+          cache: false

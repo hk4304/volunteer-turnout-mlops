@@ -1,0 +1,97 @@
+schema: '2.0'
+stages:
+  data_processing:
+    cmd: python src/data_processing.py
+    deps:
+    - path: data/raw/beach_data.csv
+      hash: md5
+      md5: f1e85df21950721b0a8e9979593a9e7f
+      size: 37837
+    - path: src/data_processing.py
+      hash: md5
+      md5: ea26b9f366b2ba31120268e8b872b172
+      size: 2139
+    params:
+      params.yaml:
+        base:
+          random_state: 42
+        data_processing:
+          raw_data_path: data/raw/beach_data.csv
+          processed_dir: data/processed
+          test_size: 0.2
+          target_column: actual_attendance
+        train.model_dir: models
+    outs:
+    - path: data/processed/
+      hash: md5
+      md5: ef59953ff03afc5958cfd1bec4cd6bd5.dir
+      size: 35928
+      nfiles: 2
+    - path: models/feature_names.joblib
+      hash: md5
+      md5: fc81ec6137a9a238e5a7e2e6819871e7
+      size: 100
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 8a663ebde9b2b5ef8eeb9dd49a837fc1
+      size: 28677
+    - path: src/train.py
+      hash: md5
+      md5: 1bae237a22f23a001375eec771d18e5f
+      size: 1813
+    params:
+      params.yaml:
+        base:
+          random_state: 42
+        train:
+          train_data_path: data/processed/train.csv
+          model_dir: models
+          model_name: model.joblib
+          model_params:
+            n_estimators: 200
+            max_depth: 15
+            min_samples_split: 2
+            min_samples_leaf: 1
+            max_features: sqrt
+            bootstrap: true
+            oob_score: false
+            n_jobs: -1
+            max_samples:
+            min_weight_fraction_leaf: 0.0
+            min_impurity_decrease: 0.0
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: e19f19967c794644bcb3d4c9becb7e5b
+      size: 27618881
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 2ee8046beae609e1b6b08dc18f22e9b6
+      size: 7251
+    - path: models/model.joblib
+      hash: md5
+      md5: e19f19967c794644bcb3d4c9becb7e5b
+      size: 27618881
+    - path: src/evaluate.py
+      hash: md5
+      md5: f58b866d82986e079bbf3ac4e0a82790
+      size: 1722
+    params:
+      params.yaml:
+        base:
+          random_state: 42
+        data_processing.target_column: actual_attendance
+        evaluate:
+          test_data_path: data/processed/test.csv
+          metrics_path: metrics/metrics.json
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 7b8932ade4ba1379b910f20f68e34114
+      size: 92
