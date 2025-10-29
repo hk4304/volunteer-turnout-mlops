@@ -4,131 +4,374 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volunteer Turnout Predictor</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status-loaded {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .metric-value {
+            color: #6366f1;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .form-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .form-card h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        select, input {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            color: white;
+        }
+
+        .result-card h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .prediction-result {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .info-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
+    <h1>🌊 Predict volunteer attendance using ML</h1>
+    
     <div class="container">
-        <header class="header">
-            <h1>🌊 Beach Cleanup Volunteer Predictor</h1>
-            <p class="subtitle">Predict volunteer attendance using ML</p>
-        </header>
-
-        <div class="content">
-            <!-- Model Info Card -->
-            <div class="card info-card">
+        <!-- Info Cards -->
+        <div class="info-cards">
+            <div class="card">
                 <h2>📊 Model Information</h2>
-                <div id="model-info">
-                    <div class="loading">Loading model info...</div>
+                <div>
+                    <strong>Status:</strong> 
+                    <span id="model-status" class="status-badge status-error">Checking...</span>
                 </div>
+                <div id="model-details" style="margin-top: 20px;"></div>
             </div>
-
-            <!-- Model Metrics Card -->
-            <div class="card metrics-card">
+            
+            <div class="card">
                 <h2>📈 Model Performance</h2>
-                <div id="metrics-display">
-                    <div class="loading">Loading metrics...</div>
+                <div class="metric">
+                    <span class="metric-label">R² Score:</span>
+                    <span class="metric-value" id="r2-score">-</span>
                 </div>
-            </div>
-
-            <!-- Prediction Form -->
-            <div class="card prediction-card">
-                <h2>🎯 Make a Prediction</h2>
-                <form id="prediction-form">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="month">Month</label>
-                            <select id="month" name="month" required>
-                                <option value="">Select Month</option>
-                                <option value="1">January</option>
-                                <option value="2">February</option>
-                                <option value="3">March</option>
-                                <option value="4">April</option>
-                                <option value="5">May</option>
-                                <option value="6">June</option>
-                                <option value="7">July</option>
-                                <option value="8">August</option>
-                                <option value="9">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="day_of_week">Day of Week</label>
-                            <select id="day_of_week" name="day_of_week" required>
-                                <option value="">Select Day</option>
-                                <option value="0">Monday</option>
-                                <option value="1">Tuesday</option>
-                                <option value="2">Wednesday</option>
-                                <option value="3">Thursday</option>
-                                <option value="4">Friday</option>
-                                <option value="5">Saturday</option>
-                                <option value="6">Sunday</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="time_of_day">Time of Day</label>
-                            <select id="time_of_day" name="time_of_day" required>
-                                <option value="">Select Time</option>
-                                <option value="9">9 AM - Morning</option>
-                                <option value="14">2 PM - Afternoon</option>
-                                <option value="16">4 PM - Evening</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="is_holiday">Is Holiday?</label>
-                            <select id="is_holiday" name="is_holiday" required>
-                                <option value="">Select</option>
-                                <option value="0">No</option>
-                                <option value="1">Yes</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="beach_id">Beach ID</label>
-                            <select id="beach_id" name="beach_id" required>
-                                <option value="">Select Beach</option>
-                                <option value="1">Beach 1</option>
-                                <option value="2">Beach 2</option>
-                                <option value="3">Beach 3</option>
-                                <option value="4">Beach 4</option>
-                                <option value="5">Beach 5</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="registered_volunteers">Registered Volunteers</label>
-                            <input type="number" id="registered_volunteers" 
-                                   name="registered_volunteers" 
-                                   placeholder="e.g., 50" min="0" required>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-predict">
-                        Predict Attendance
-                    </button>
-                </form>
-
-                <!-- Result Display -->
-                <div id="prediction-result" class="result-box" style="display: none;">
-                    <h3>Prediction Result</h3>
-                    <div class="result-value">
-                        <span id="predicted-value"></span> volunteers expected
-                    </div>
+                <div class="metric">
+                    <span class="metric-label">Mean Squared Error:</span>
+                    <span class="metric-value" id="mse">-</span>
                 </div>
-
-                <div id="error-message" class="error-box" style="display: none;"></div>
+                <div class="metric">
+                    <span class="metric-label">Mean Absolute Error:</span>
+                    <span class="metric-value" id="mae">-</span>
+                </div>
             </div>
         </div>
 
-        <footer class="footer">
-            <p>Built with ❤️ using Flask, DVC, and Docker | MLOps Pipeline</p>
-        </footer>
+        <!-- Prediction Form -->
+        <div class="form-card">
+            <h2>🎯 Make a Prediction</h2>
+            <form id="prediction-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="month">Month</label>
+                        <select id="month" name="month" required>
+                            <option value="1">January</option>
+                            <option value="2" selected>February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="day_of_week">Day of Week</label>
+                        <select id="day_of_week" name="day_of_week" required>
+                            <option value="0">Monday</option>
+                            <option value="1" selected>Tuesday</option>
+                            <option value="2">Wednesday</option>
+                            <option value="3">Thursday</option>
+                            <option value="4">Friday</option>
+                            <option value="5">Saturday</option>
+                            <option value="6">Sunday</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="time_of_day">Time of Day</label>
+                        <select id="time_of_day" name="time_of_day" required>
+                            <option value="6">6 AM - Morning</option>
+                            <option value="9">9 AM - Mid Morning</option>
+                            <option value="12">12 PM - Noon</option>
+                            <option value="14" selected>2 PM - Afternoon</option>
+                            <option value="17">5 PM - Evening</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="is_holiday">Is Holiday?</label>
+                        <select id="is_holiday" name="is_holiday" required>
+                            <option value="0" selected>No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="beach_id">Beach ID</label>
+                        <select id="beach_id" name="beach_id" required>
+                            <option value="1">Beach 1</option>
+                            <option value="2" selected>Beach 2</option>
+                            <option value="3">Beach 3</option>
+                            <option value="4">Beach 4</option>
+                            <option value="5">Beach 5</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="registered_volunteers">Registered Volunteers</label>
+                        <input type="number" id="registered_volunteers" name="registered_volunteers" 
+                               value="110" min="0" required>
+                    </div>
+                </div>
+
+                <button type="submit">Predict Attendance</button>
+            </form>
+        </div>
+
+        <!-- Result Card -->
+        <div class="result-card">
+            <h2>Prediction Result</h2>
+            <div class="prediction-result" id="prediction-result">
+                Enter details and click predict
+            </div>
+        </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Load model info on page load
+        async function loadModelInfo() {
+            try {
+                const response = await fetch('/model-info');
+                const data = await response.json();
+                
+                // Update status
+                const statusEl = document.getElementById('model-status');
+                statusEl.textContent = 'Model Loaded ✓';
+                statusEl.className = 'status-badge status-loaded';
+                
+                // Update model details
+                const detailsEl = document.getElementById('model-details');
+                detailsEl.innerHTML = `
+                    <p style="margin-top: 10px;"><strong>Type:</strong> ${data.model_type}</p>
+                    <p><strong>Features:</strong> ${data.n_features}</p>
+                    <p><strong>Status:</strong> ${data.status}</p>
+                `;
+                
+                // Update metrics
+                document.getElementById('r2-score').textContent = data.current_metrics.r2.toFixed(4);
+                document.getElementById('mse').textContent = data.current_metrics.mse.toFixed(2);
+                document.getElementById('mae').textContent = data.current_metrics.mae.toFixed(2);
+                
+            } catch (error) {
+                console.error('Error loading model info:', error);
+                const statusEl = document.getElementById('model-status');
+                statusEl.textContent = 'Model Not Loaded ✗';
+                statusEl.className = 'status-badge status-error';
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('prediction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                month: parseInt(document.getElementById('month').value),
+                day_of_week: parseInt(document.getElementById('day_of_week').value),
+                time_of_day: parseInt(document.getElementById('time_of_day').value),
+                is_holiday: parseInt(document.getElementById('is_holiday').value),
+                beach_id: parseInt(document.getElementById('beach_id').value),
+                registered_volunteers: parseInt(document.getElementById('registered_volunteers').value)
+            };
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    document.getElementById('prediction-result').textContent = 'Error: ' + data.error;
+                } else {
+                    document.getElementById('prediction-result').textContent = 
+                        Math.round(data.prediction) + ' volunteers expected';
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('prediction-result').textContent = 'Error making prediction';
+            }
+        });
+
+        // Load model info when page loads
+        loadModelInfo();
+    </script>
 </body>
 </html>
