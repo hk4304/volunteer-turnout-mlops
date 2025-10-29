@@ -28,6 +28,21 @@ COPY models/ ./models/
 COPY metrics/ ./metrics/
 COPY params.yaml .
 
+# Build arguments for version tracking
+ARG GIT_COMMIT=unknown
+ARG BUILD_TIME=unknown
+ARG MODEL_VERSION=unknown
+
+# Set as environment variables so app can access them
+ENV GIT_COMMIT=${GIT_COMMIT} \
+    BUILD_TIME=${BUILD_TIME} \
+    MODEL_VERSION=${MODEL_VERSION}
+
+# Create version info file
+RUN echo "Git Commit: ${GIT_COMMIT}" > /app/version.txt && \
+    echo "Build Time: ${BUILD_TIME}" >> /app/version.txt && \
+    echo "Model Version: ${MODEL_VERSION}" >> /app/version.txt
+
 # Create a non-root user for security
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
