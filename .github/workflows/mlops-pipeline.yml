@@ -1,0 +1,149 @@
+name: MLOps CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  train-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+        
+    - name: Verify AWS connection
+      run: |
+        aws sts get-caller-identity
+        aws s3 ls s3://volunteer-mlops-dvc-hk4304/ || echo "S3 bucket check"
+        
+    - name: Configure DVC
+      run: |
+        dvc remote modify myremote region ap-south-1
+        
+    - name: Pull data from DVC
+      run: |
+        echo "Pulling data from S3..."
+        dvc pull -v
+        
+    - name: Run ML Pipeline
+      run: |
+        echo "Running ML pipeline..."
+        dvc repro -v
+        
+    - name: Validate Model Performance
+      id: validation
+      run: |
+        echo "Validating model performance..."
+        python src/validate_model.py
+        VALIDATION_EXIT_CODE=$?
+        echo "validation_passed=$VALIDATION_EXIT_CODE" >> $GITHUB_OUTPUT
+        exit $VALIDATION_EXIT_CODE
+      continue-on-error: true
+      
+    - name: Check Validation Result
+      if: steps.validation.outputs.validation_passed != '0'
+      run: |
+        echo "════════════════════════════════════════════════════════"
+        echo "⚠️  MODEL VALIDATION FAILED"
+        echo "════════════════════════════════════════════════════════"
+        echo ""
+        echo "The new model did not meet performance criteria."
+        echo "Pipeline will stop here to prevent deploying a worse model."
+        echo ""
+        echo "What happens next:"
+        echo "  - The old model remains in production"
+        echo "  - Docker image will NOT be built"
+        echo "  - No deployment will occur"
+        echo ""
+        echo "Recommendation:"
+        echo "  1. Review the validation report above"
+        echo "  2. Adjust hyperparameters in params.yaml"
+        echo "  3. Push changes to trigger a new run"
+        echo ""
+        echo "════════════════════════════════════════════════════════"
+        exit 1
+        
+    - name: Push artifacts to DVC
+      if: success()
+      run: |
+        echo "Model passed validation - pushing artifacts to S3..."
+        dvc push
+        
+    - name: Build Docker image
+      if: success()
+      run: |
+        echo "Building Docker image..."
+        docker build -t volunteer-predictor .
+        docker tag volunteer-predictor:latest 632676638228.dkr.ecr.ap-south-1.amazonaws.com/volunteer-predictor:latest
+        docker tag volunteer-predictor:latest 632676638228.dkr.ecr.ap-south-1.amazonaws.com/volunteer-predictor:${{ github.sha }}
+        
+    - name: Login to Amazon ECR
+      if: success()
+      run: |
+        echo "Logging into ECR..."
+        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 632676638228.dkr.ecr.ap-south-1.amazonaws.com
+        
+    - name: Push to ECR
+      if: success()
+      run: |
+        echo "Pushing images to ECR..."
+        docker push 632676638228.dkr.ecr.ap-south-1.amazonaws.com/volunteer-predictor:latest
+        docker push 632676638228.dkr.ecr.ap-south-1.amazonaws.com/volunteer-predictor:${{ github.sha }}
+        
+    - name: Generate Deployment Summary
+      if: success()
+      run: |
+        echo "Generating deployment summary..."
+        cat > deployment-summary.md << 'SUMMARY'
+        # 🚀 Deployment Summary
+        
+        ## Docker Image
+        - **Image**: 632676638228.dkr.ecr.ap-south-1.amazonaws.com/volunteer-predictor:latest
+        - **Repository**: volunteer-predictor
+        - **Region**: ap-south-1
+        
+        ## Model Metrics
+        $(cat metrics/metrics.json)
+        
+        ## Git Info
+        - **Commit**: ${{ github.sha }}
+        - **Branch**: ${{ github.ref }}
+        - **Timestamp**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+        SUMMARY
+        cat deployment-summary.md
+        
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: model-metrics
+        path: |
+          metrics/
+          deployment-summary.md
