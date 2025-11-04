@@ -5,7 +5,7 @@
 # ============================================================
 
 # Configuration
-EC2_IP="13.232.52.36"
+EC2_IP="43.205.146.252"
 KEY_PATH="/Users/harshk/CodeSpace/OPS/volunteer-app-key.pem"
 ECR_REPO="632676638228.dkr.ecr.ap-south-1.amazonaws.com/volunteer-predictor"
 AWS_REGION="ap-south-1"

@@ -30,3 +30,6 @@ Thumbs.db
 
 # DVC-managed model files
 models/*.joblib
+mlruns/
+.mlflow/
+mlruns/
