@@ -1,343 +1,113 @@
-Here is a single, clean **README.md** block you can copy in one go and paste into GitHub:
-
-```markdown
 # VolunteerMLOps: End-to-End MLOps Pipeline for Beach Volunteer Turnout Prediction
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?logo=docker&logoColor=white)](https://www.docker.com/)
 [![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![DVC](https://img.shields.io/badge/DVC-Data_Version_Control-9cf.svg)](https://dvc.org/)
 
-An automated machine learning operations (MLOps) pipeline for predicting volunteer turnout at beach cleanup events. This project demonstrates production-ready ML infrastructure with CI/CD, data versioning, containerization, and cloud deployment.
+> **An automated machine learning operations (MLOps) pipeline for predicting volunteer turnout at beach cleanup events.**
+
+This project demonstrates production-ready ML infrastructure incorporating Continuous Integration/Continuous Deployment (CI/CD), data versioning, containerization, and cloud deployment.
+
+---
+
+## 📑 Table of Contents
+- [Project Overview](#-project-overview)
+- [Key Features](#-key-features)
+- [Architecture](#-architecture)
+- [Project Structure](#-project-structure)
+- [Quick Start](#-quick-start-local)
+- [API Usage](#-api-usage)
+- [CI/CD Pipeline](#-cicd-github-actions)
+- [Configuration](#-configuration)
+- [Model Performance](#-model-performance-reference)
+- [Future Work](#-limitations-and-future-work)
+- [Authors](#-authors-and-acknowledgments)
 
 ---
 
 ## 📊 Project Overview
 
-Environmental organizations struggle to predict volunteer attendance at beach cleanup events, leading to resource wastage (overstaffing) or insufficient workforce (understaffing). This project addresses that problem using an end-to-end MLOps pipeline that:
+Environmental organizations often struggle to predict volunteer attendance at beach cleanup events. This uncertainty leads to resource wastage (overstaffing) or insufficient workforce (understaffing). 
 
-- Predicts attendance with high accuracy (R² ≈ 0.93, MAE ≈ 8–9 volunteers) based on 2000 real-like event records.
-- Automates deployment from code push to production in a few minutes via CI/CD.
-- Ensures reproducibility through data and model versioning.
-- Scales via containerized infrastructure on cloud instances.
+**VolunteerMLOps** addresses this problem using an end-to-end pipeline that:
+- **Predicts attendance** with high accuracy ($R^2 \approx 0.93$) based on historical event records.
+- **Automates deployment** from code push to production via GitHub Actions.
+- **Ensures reproducibility** through DVC (Data Version Control) and model versioning.
+- **Scales efficiently** via containerized infrastructure (Docker) on AWS.
 
-The model uses a Random Forest Regressor trained on features such as month, day of week, time of day, holiday flag, beach ID, and registered volunteers.
+The core model is a **Random Forest Regressor** trained on features such as seasonality, time of day, and registration data.
 
 ---
 
 ## 🎯 Key Features
 
 ### Machine Learning
-
-- Random Forest Regressor for regression on attendance counts.
-- Inputs:
-  - Month (1–12)
-  - Day of week (0–6)
-  - Time of day (0–23)
-  - Is holiday (0/1)
-  - Beach ID (1–5)
-  - Registered volunteers (count)
-- Outputs:
-  - Predicted volunteer turnout (continuous value).
+- **Model:** Random Forest Regressor.
+- **Input Features:**
+  - `Month` (1–12)
+  - `Day of week` (0–6)
+  - `Time of day` (0–23)
+  - `Is holiday` (Binary: 0/1)
+  - `Beach ID` (Categorical: 1–5)
+  - `Registered volunteers` (Integer count)
+- **Output:** Predicted volunteer turnout (Continuous).
 
 ### MLOps Infrastructure
-
-- **Data Version Control (DVC)** for tracking datasets and models.
-- **GitHub Actions** for automated CI/CD (process → train → evaluate → build → push).
-- **Docker** for containerizing the web service and model.
-- **AWS S3** as data store, **AWS ECR** as container registry, **AWS EC2** for serving.
-- **MLflow** (optional) for experiment logging and model comparison.
-- **Model validation gates**: Only models above defined metric thresholds are allowed to be deployed.
+- **Data Version Control (DVC):** Tracks datasets, models, and pipeline stages.
+- **GitHub Actions:** Automates the CI/CD pipeline (Process $\rightarrow$ Train $\rightarrow$ Evaluate $\rightarrow$ Build $\rightarrow$ Push).
+- **Docker:** Containerizes the Flask web service and model for consistent deployment.
+- **AWS Integration:** - **S3:** Artifact and data storage.
+  - **ECR:** Container registry.
+  - **EC2:** Production deployment.
+- **Validation Gates:** Automated checks ensure only models meeting metric thresholds are deployed.
 
 ---
 
 ## 🏗️ Architecture
 
-High-level pipeline:
 
-1. Raw data (CSV) stored in S3.
-2. DVC pulls data and orchestrates stages:
-   - Data preprocessing.
-   - Model training.
-   - Evaluation and metrics logging.
-3. GitHub Actions runs the full pipeline on every push to `main`.
-4. If metrics pass thresholds, a Docker image is built and pushed to ECR.
-5. EC2 pulls the latest image and runs the Flask API behind Gunicorn.
-6. The API exposes endpoints for prediction, health checks, and version info.
 
-You can include an architecture diagram (e.g., `f1.jpeg`) in your documentation or paper; the codebase is structured to reflect that flow.
+**The High-Level Data Flow:**
+
+1.  **Ingestion:** Raw data (CSV) is stored in AWS S3.
+2.  **Orchestration:** DVC pulls data and manages the pipeline DAG (Directed Acyclic Graph):
+    * Preprocessing & Splitting
+    * Model Training
+    * Evaluation & Metrics Logging
+3.  **CI/CD:** GitHub Actions triggers on every push to `main`.
+4.  **Deployment:** If metrics pass defined thresholds, a Docker image is built, pushed to AWS ECR, and served via AWS EC2.
+5.  **Inference:** The API is exposed via Flask (Gunicorn in production) for real-time predictions.
 
 ---
 
 ## 📦 Project Structure
 
-```
+```bash
 volunteer-turnout-mlops/
 ├── .github/
 │   └── workflows/
-│       └── mlops-pipeline.yml      # CI/CD workflow
+│       └── mlops-pipeline.yml      # CI/CD workflow definition
 ├── app/
-│   ├── app.py                      # Flask REST API
+│   ├── app.py                      # Flask REST API entry point
 │   └── templates/
-│       └── index.html              # Simple UI form (if provided)
+│       └── index.html              # Frontend UI (optional)
 ├── data/
-│   ├── raw/                        # Raw CSV(s)
-│   └── processed/                  # Train/test splits
+│   ├── raw/                        # Raw CSV data (tracked by DVC)
+│   └── processed/                  # Transformed data (tracked by DVC)
 ├── models/
-│   ├── model.joblib                # Trained Random Forest
-│   └── feature_names.joblib        # Feature ordering metadata
+│   ├── model.joblib                # Serialized Random Forest model
+│   └── feature_names.joblib        # Feature metadata
 ├── metrics/
-│   └── metrics.json                # Evaluation metrics
+│   └── metrics.json                # Evaluation results
 ├── src/
-│   ├── process.py                  # Preprocessing & splitting
-│   ├── train.py                    # Model training
-│   ├── evaluate.py                 # Evaluation on test set
-│   └── validate_model.py           # Metric-based deployment gate
-├── dvc.yaml                        # DVC pipeline definition
-├── params.yaml                     # Hyperparameters & config
-├── Dockerfile                      # Container build spec
+│   ├── process.py                  # Data cleaning & splitting
+│   ├── train.py                    # Model training script
+│   ├── evaluate.py                 # Evaluation & metrics generation
+│   └── validate_model.py           # Deployment gate logic
+├── dvc.yaml                        # DVC pipeline stages
+├── params.yaml                     # Hyperparameters & configuration
+├── Dockerfile                      # Container build specification
 ├── requirements.txt                # Python dependencies
 └── README.md
-```
-
----
-
-## 🚀 Quick Start (Local)
-
-### Prerequisites
-
-- Python 3.10+
-- Git
-- (Optional) DVC
-- (Optional) Docker
-- (Optional, for full pipeline) AWS CLI configured with your credentials
-
-### 1. Clone the Repository
-
-```
-git clone https://github.com/hk4304/volunteer-turnout-mlops.git
-cd volunteer-turnout-mlops
-```
-
-### 2. Create and Activate Virtual Environment
-
-```
-python -m venv venv
-# Linux / macOS
-source venv/bin/activate
-# Windows
-# venv\Scripts\activate
-```
-
-### 3. Install Dependencies
-
-```
-pip install -r requirements.txt
-```
-
-### 4. Get Data via DVC (If Configured)
-
-```
-# This pulls versioned data from the configured remote (e.g., S3)
-dvc pull
-```
-
-### 5. Run the Pipeline
-
-```
-# Full pipeline via DVC (recommended)
-dvc repro
-
-# Or run scripts manually:
-python src/process.py
-python src/train.py
-python src/evaluate.py
-```
-
-### 6. Run the API Server Locally
-
-```
-python app/app.py
-# or, via gunicorn if configured:
-# gunicorn -b 0.0.0.0:5000 app:app
-```
-
-The API will typically be available at `http://localhost:5000`.
-
----
-
-## 🌐 API Usage
-
-### `POST /predict`
-
-Request (example):
-
-```
-curl -X POST http://localhost:5000/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-        "month": 6,
-        "day_of_week": 5,
-        "time_of_day": 10,
-        "is_holiday": 0,
-        "beach_id": 2,
-        "registered_volunteers": 95
-      }'
-```
-
-Example response:
-
-```
-{
-  "predicted_attendance": 87.3
-}
-```
-
-### `GET /health`
-
-```
-curl http://localhost:5000/health
-```
-
-Typical response:
-
-```
-{
-  "status": "healthy",
-  "model_loaded": true
-}
-```
-
-### `GET /version`
-
-```
-curl http://localhost:5000/version
-```
-
-Typical response:
-
-```
-{
-  "git_commit": "abcdef1",
-  "build_time": "2025-12-28T20:30:00Z",
-  "model_r2_score": 0.9307
-}
-```
-
----
-
-## 🔄 CI/CD (GitHub Actions)
-
-On every push to `main`, the workflow:
-
-1. Checks out the repository.
-2. Sets up Python and installs dependencies.
-3. Pulls data via DVC.
-4. Runs the full ML pipeline.
-5. Validates metrics (R² / MAE / MSE thresholds).
-6. Builds a Docker image with the trained model.
-7. Pushes the image to Amazon ECR.
-8. Optionally triggers or supports deployment to an EC2 instance.
-
-You can inspect and modify the workflow in `.github/workflows/mlops-pipeline.yml`.
-
----
-
-## ⚙️ Configuration
-
-### Hyperparameters (`params.yaml`)
-
-Example structure:
-
-```
-base:
-  random_state: 42
-
-train:
-  model_params:
-    n_estimators: 200
-    max_depth: null
-    min_samples_split: 2
-    bootstrap: true
-    max_features: "sqrt"
-
-evaluate:
-  threshold_r2: 0.80
-  threshold_mae: 15
-  threshold_mse: 300
-```
-
-Tweak these values to experiment with different model behaviors and validation gates.
-
-### Secrets (for CI/CD and Cloud)
-
-In your repository settings, configure secrets such as:
-
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`
-- `ECR_REPOSITORY`
-
-These are used by the GitHub Actions workflow to authenticate to AWS and push images.
-
----
-
-## 📈 Model Performance (Reference)
-
-On the reference dataset (2000 events):
-
-- R² ≈ 0.9307
-- MAE ≈ 8.35 volunteers
-- MSE ≈ 131.41
-
-Interpretation:
-
-- The model explains about 93% of the variance in actual attendance.
-- Average absolute error of about 8 volunteers is generally acceptable for planning in events with around 80–100 volunteers.
-
----
-
-## 🚧 Limitations and Future Work
-
-Current limitations:
-
-- No real-time weather integration (static features only).
-- Single primary model (Random Forest) – more advanced ensembles are not yet in production.
-- Manual steps remain in infrastructure provisioning (e.g., EC2 creation).
-- No dedicated monitoring dashboard or drift detection in production.
-
-Planned future work:
-
-- Integration with a weather API for dynamic feature enrichment.
-- Experimentation with XGBoost, LightGBM, and neural networks.
-- Deployment to Kubernetes (EKS/GKE) for auto-scaling.
-- Addition of drift detection and monitoring (e.g., Evidently).
-- Building a Streamlit or Dash UI for non-technical organizers.
-
----
-
-## 👥 Authors and Acknowledgments
-
-**Authors**
-
-- Harsh Kotadiya – B.Tech AI & ML  
-- Abhishek Sinha – B.Tech AI & ML  
-
-Symbiosis Institute of Technology, Symbiosis International University, Pune.
-
-**Advisor**
-
-- Dr. Mayur Gaikwad
-
-**Acknowledgments**
-
-- Open-source communities for DVC, MLflow, scikit-learn, Flask, and Docker.
-- The MLOps course that motivated this end-to-end implementation.
-
----
-
-## 📝 License
-
-This project is released under the **MIT License**. See the `LICENSE` file for details.
-```
-
